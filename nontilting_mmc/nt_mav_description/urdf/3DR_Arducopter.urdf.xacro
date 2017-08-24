@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+
+<robot name="3DR_Arducopter" xmlns:xacro="http://ros.org/wiki/xacro">
+
+
+ <!-- Start gazebo_ros_control plugin -->
+ <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/$(arg name)</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+    </plugin>
+  </gazebo>
+
+
+
+  <xacro:property name="enable_bag_plugin" value="false" />
+  <xacro:property name="bag_file" value="morus.bag" />
+
+  <!-- Instantiate 3DR_Arducopter "mechanics" -->
+ <xacro:include filename="$(find nt_mav_description)/urdf/3DR_Arducopter_base.urdf.xacro" />
+
+<!-- Create link and joint for a sensor -->
+  <link name="pose_sensor1_link">
+    <inertial>
+      <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0"
+        izz="0.00001" />
+      <mass value="0.01" />
+    </inertial>
+  </link>
+  <joint name="pose_sensor1_joint" type="revolute">
+    <parent link="base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <child link="pose_sensor1_link" />
+    <limit upper="0" lower="0" effort="0" velocity="0" />
+  </joint>
+
+  <!-- Mount an IMU -->
+  <gazebo>
+    <!-- IMU -->
+    <plugin filename="libhector_gazebo_ros_imu.so" name="imu_ros">
+      <!-- parameters according to http://wiki.ros.org/hector_gazebo_plugins#GazeboRosImu -->
+      <!-- robotNamespace>${namespace}</robotNamespace -->
+      <robotNamespace>$(arg name)</robotNamespace>
+      <bodyName>imu_link</bodyName> <!-- (string, required): name of the body which holds the IMU sensor -->
+      <topicName>imu</topicName> <!-- (string): name of the sensor output topic and prefix of service names (defaults to imu) -->
+      <accelOffset>0.0 0.0 0.0</accelOffset> <!-- (Vector3): constant acceleration offset -->
+      <accelDrift>0.0 0.0 0.0</accelDrift> <!-- (Vector3): standard deviation of the acceleration drift error -->
+      <accelDriftFrequency>0.0 0.0 0.0</accelDriftFrequency> <!-- (Vector3): mean frequency of the acceleration drift staviti na nulu-->
+      <accelGaussianNoise>0.001 0.001 0.001</accelGaussianNoise> <!-- (Vector3): standard deviation of the additive Gaussian acceleration noise -->
+      <rateOffset>0.0 0.0 0.0</rateOffset> <!-- (Vector3): constant rate offset -->
+      <rateDrift>0.0 0.0 0.0</rateDrift> <!-- (Vector3): standard deviation of the rate drift error -->
+      <rateDriftFrequency>0.0 0.0 0.0</rateDriftFrequency> <!-- (Vector3): mean frequency of the rate drift  staviti na nulu-->
+      <rateGaussianNoise>0.0001 0.0001 0.0001</rateGaussianNoise> <!-- (Vector3): standard deviation of the additive Gaussian rate noise -->
+      <headingOffset>0.0</headingOffset> <!-- (double): constant heading offset -->
+      <headingDrift>0.0</headingDrift> <!-- (double): standard deviation of the heading drift error -->
+      <headingDriftFrequency>0.0</headingDriftFrequency> <!-- (double): mean frequency of the heading drift  staviti na nulu-->
+      <headingGaussianNoise>0.0</headingGaussianNoise> <!-- (double): standard deviation of the heading additive Gaussian noise -->
+      <rpyOffsets>0.0 0.0 0.0</rpyOffsets> <!-- (Vector3): if non-zero, used to calculate accelOffset and headingOffset so that resulting roll, pitch and yaw errors correspond to this values when the platform is leveled (for compatibility with gazebo_plugins) -->
+    </plugin>
+  </gazebo>
+
+    <!-- Mount Pose sensor at pose_sensor1_link -->
+  <gazebo>
+    <!-- Generic 6D pose sensor plugin -->
+    <plugin filename="libmav_gazebo_pose_plugin.so" name="pose_sensor1">
+      <linkName>pose_sensor1_link</linkName>
+      <robotNamespace>$(arg name)</robotNamespace>
+      <poseTopic>sensors/pose1</poseTopic>
+      <measurementDivisor>1</measurementDivisor> <!-- only every (seq % measurementDivisor) == 0 measurement is published [int]  staviti na 1-->
+      <measurementDelay>0</measurementDelay> <!-- time that measurement gets held back before it's published in [simulation cycles (int)] -->
+      <unknownDelay>0.0</unknownDelay> <!-- additional delay, that just gets added to the timestamp [s] -->
+      <noiseNormalP>0.0 0.0 0.0</noiseNormalP> <!-- standard deviation of additive white gaussian noise [m]  staviti na nulu -->
+      <noiseNormalQ>0.0 0.0 0.0</noiseNormalQ> <!-- standard deviation white gaussian noise [rad]: q_m = q*quaternionFromSmallAngleApproximation(noiseNormalQ)  staviti na nulu-->
+      <noiseUniformP>0 0 0</noiseUniformP> <!-- symmetric bounds of uniform noise [m] -->
+      <noiseUniformQ>0 0 0</noiseUniformQ> <!-- symmetric bounds of uniform noise [rad], computation see above -->
+    </plugin>
+  </gazebo>
+</robot>

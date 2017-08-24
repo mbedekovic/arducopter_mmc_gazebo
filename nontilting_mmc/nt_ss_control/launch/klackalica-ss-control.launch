@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+    <arg name="namespace" default="klackalica"/>
+    <arg name="ss_model_file" default="klackalica_lab_ss_model_nom.yaml" />
+
+    <group ns="$(arg namespace)">
+
+    	<rosparam file="$(find klackalica_pixhawk)/cfg/kalibracija_masa.yaml" command="load"/>
+
+        <rosparam file="$(find morus_ss_control)/cfg/$(arg ss_model_file)" command="load"/>
+
+        <node name="klackalica_ctl" pkg="morus_ss_control" type="attitude_ss_ctl_node" output="screen"/>
+
+    </group>
+
+    <!--node name="rosbag_rec" pkg="rosbag" type="record" args="-a"/-->
+</launch>

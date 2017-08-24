@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+	<!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find nt_ss_control)/cfg/mav_control.yaml" command="load"/>
+
+  <!-- load the controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/arducopter"  args="joint_state_controller
+    	movable_mass_0_position_controller
+		movable_mass_1_position_controller 
+		movable_mass_2_position_controller 
+		movable_mass_3_position_controller"/>
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+    <remap from="/joint_states" to="/arducopter/joint_states"/>
+  </node>
+  
+  
+	<!-- Load state space controller -->
+	<arg name="namespace" default="arducopter"/>
+	<arg name="ss_model_file" default="A5.yaml" />
+
+	<group ns="$(arg namespace)">
+
+		<rosparam file="$(find nt_ss_control)/cfg/testCase/$(arg ss_model_file)" command="load"/>
+
+		<node name="quad_ss_ctl" pkg="nt_ss_control" type="quad_ss_ctl_node" output="screen"/>
+
+	</group> 
+
+ <!--mav state publisher -->
+  <node pkg="nt_ss_control" type="mav_state_pub.py" name="mav_vel_publisher" output="screen">
+        <param name="/use_sim_time" value="true"/>
+  </node> 
+  
+  <!--height control -->
+  <!--<node pkg="nt_ss_control" type="height_ctl.py" name="height_ctl" output="screen">
+        <param name="gm_attitude_ctl" value="1"/>
+        <param name="/use_sim_time" value="true"/>
+  </node>
+-->  
+ 
+
+
+	<!-- position and yaw controll -->
+  <node pkg="nt_ss_control" type="position_yaw_ctl.py" name="pos_yaw_ctl" output="screen">
+        <param name="gm_attitude_ctl" value="0"/>
+        <param name="/use_sim_time" value="1"/>
+  </node>  
+
+</launch>

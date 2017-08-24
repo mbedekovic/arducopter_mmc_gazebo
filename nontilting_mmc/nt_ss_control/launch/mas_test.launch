@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+<!-- This only starts the moving mass controll. Used for tuning the moving mass dynamics -->
+
+	<!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find nt_ss_control)/cfg/mav_control.yaml" command="load"/>
+
+  <!-- load the controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/arducopter"  args="joint_state_controller
+    	movable_mass_0_position_controller
+		movable_mass_1_position_controller 
+		movable_mass_2_position_controller 
+		movable_mass_3_position_controller"/>
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+    <remap from="/joint_states" to="/arducopter/joint_states"/>
+  </node>
+  
+</launch>
